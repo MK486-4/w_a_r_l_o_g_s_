@@ -56,62 +56,36 @@ function App() {
 
   // Mock data - In real app, this would come from database
   useEffect(() => {
-    // Initialize with admin user
-    const adminUser: User = {
-      id: '1',
-      email: 'admin@logs.com',
-      discord_username: 'admin#0001',
-      role: 'admin',
-      created_at: new Date().toISOString()
-    };
-
-    // Sample logs
-    const sampleLogs: Log[] = [
-      {
-        id: '1',
-        title: 'Initial Conflict Documentation',
-        content: 'This log documents the initial phases of the conflict with detailed analysis of events and participants involved.',
-        created_by: '1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        code: 'WAR001'
-      },
-      {
-        id: '2',
-        title: 'Strategic Analysis Report',
-        content: 'Comprehensive analysis of strategic movements and decisions made during the ongoing situation.',
-        created_by: '1',
-        created_at: new Date(Date.now() - 43200000).toISOString(),
-        code: 'WAR002'
-      }
-    ];
-
-    // Sample activities
-    const sampleActivities: Activity[] = [
-      {
-        id: '1',
-        user_id: '1',
-        user_email: 'admin@logs.com',
-        action: 'Created Log',
-        details: 'Created log: Strategic Analysis Report',
-        created_at: new Date(Date.now() - 3600000).toISOString()
-      },
-      {
-        id: '2',
-        user_id: '2',
-        user_email: 'user@example.com',
-        action: 'Viewed Log',
-        details: 'Viewed log: Initial Conflict Documentation with code WAR001',
-        created_at: new Date(Date.now() - 1800000).toISOString()
-      }
-    ];
-
-    setLogs(sampleLogs);
-    setActivities(sampleActivities);
-
-    // Set admin as current user for demo
-    setCurrentUser(adminUser);
-    setCurrentView('admin');
+    // Load data from localStorage
+    const savedLogs = localStorage.getItem('warLogs');
+    const savedActivities = localStorage.getItem('warActivities');
+    const savedApplications = localStorage.getItem('warApplications');
+    
+    if (savedLogs) {
+      setLogs(JSON.parse(savedLogs));
+    }
+    
+    if (savedActivities) {
+      setActivities(JSON.parse(savedActivities));
+    }
+    
+    if (savedApplications) {
+      setAdminApplications(JSON.parse(savedApplications));
+    }
   }, []);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('warLogs', JSON.stringify(logs));
+  }, [logs]);
+
+  useEffect(() => {
+    localStorage.setItem('warActivities', JSON.stringify(activities));
+  }, [activities]);
+
+  useEffect(() => {
+    localStorage.setItem('warApplications', JSON.stringify(adminApplications));
+  }, [adminApplications]);
 
   // Keyboard shortcut for admin application
   useEffect(() => {
@@ -167,13 +141,14 @@ function App() {
   const handleCreateLog = () => {
     if (!newLogTitle || !newLogContent) return;
     
+    const nextLogNumber = logs.length + 1;
     const newLog: Log = {
       id: Date.now().toString(),
       title: newLogTitle,
       content: newLogContent,
       created_by: currentUser?.id || '',
       created_at: new Date().toISOString(),
-      code: `WAR${String(logs.length + 1).padStart(3, '0')}`
+      code: `WAR${String(nextLogNumber).padStart(3, '0')}`
     };
     
     setLogs([...logs, newLog]);
@@ -399,12 +374,19 @@ function App() {
               <div className="text-gray-300">
                 <p className="mb-4">Available log codes:</p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {logs.map((log) => (
+                  {logs.length > 0 ? logs.map((log) => (
                     <div key={log.id} className="bg-white/5 rounded-lg p-3 border border-white/10">
                       <code className="text-emerald-400 font-courier">{log.code}</code>
                       <p className="text-sm text-gray-400 mt-1 truncate">{log.title}</p>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="col-span-full text-center text-gray-400 py-8">
+                      <p>No logs available yet.</p>
+                      {currentUser?.role === 'admin' && (
+                        <p className="text-sm mt-2">Use the admin panel to create the first log.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {currentUser?.role === 'admin' && (
                   <p className="text-center text-gray-400 text-sm mt-6">
@@ -465,7 +447,7 @@ function App() {
                   <span>User View</span>
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setCurrentUser(null)}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
@@ -537,7 +519,7 @@ function App() {
                 )}
 
                 <div className="space-y-4">
-                  {logs.map((log) => (
+                  {logs.length > 0 ? logs.map((log) => (
                     <div key={log.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -553,7 +535,11 @@ function App() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center text-gray-400 py-8">
+                      <p>No logs created yet. Create your first log above.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -601,7 +587,7 @@ function App() {
                 </h3>
                 
                 <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {activities.map((activity) => (
+                  {activities.length > 0 ? activities.map((activity) => (
                     <div key={activity.id} className="bg-white/5 rounded-lg p-3 border border-white/10">
                       <div className="flex items-start space-x-3">
                         <Clock className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
@@ -613,7 +599,11 @@ function App() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center text-gray-400 py-8">
+                      <p>No recent activity</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
