@@ -329,7 +329,9 @@ function App() {
               <button
                 onClick={(e) => {
                   const input = document.querySelector('input[type="email"]') as HTMLInputElement;
-                  handleLogin(input.value);
+                  if (input.value) {
+                    handleLogin(input.value);
+                  }
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors duration-200"
               >
@@ -337,8 +339,8 @@ function App() {
               </button>
               
               <p className="text-center text-gray-400 text-sm">
-                Press Ctrl+Shift+Q to apply for admin access<br />
-                Admins: Ctrl+Shift+A for admin panel
+                Press Ctrl+Shift+Q to apply for admin access<br/>
+                Use any email with "admin" in it to get admin access
               </p>
             </div>
           </div>
@@ -463,7 +465,7 @@ function App() {
                   <span>User View</span>
                 </button>
                 <button
-                  onClick={() => setCurrentUser(null)}
+                  onClick={handleLogout}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
